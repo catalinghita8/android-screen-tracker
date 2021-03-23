@@ -18,7 +18,6 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_MIN
-import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 
@@ -33,9 +32,10 @@ class TextOverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         textView = TextView(this)
-        val color = Color.parseColor("#FFFFFF")
-        textView!!.setTextColor(color)
-        textView!!.setBackgroundColor(color)
+        val backgroundColor = Color.parseColor("#A1FFFFFF")
+        val textColor = Color.parseColor("#000000")
+        textView!!.setTextColor(textColor)
+        textView!!.setBackgroundColor(backgroundColor)
         textView!!.gravity = Gravity.CENTER_HORIZONTAL
         textView!!.text = lastUsedOverlayText
 
