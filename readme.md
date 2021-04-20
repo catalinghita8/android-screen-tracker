@@ -1,4 +1,5 @@
-# Screen tracker
+# Screen tracker [![](https://jitpack.io/v/catalinghita8/android-screen-tracker.svg)](https://jitpack.io/#catalinghita8/android-screen-tracker)
+
 
 ### Description
 Screen tracker overlays on top of the target application the currently visible fragment and its activity host. The library provides insight on what UI components are currently on top of the stacks.
@@ -6,7 +7,7 @@ Screen tracker overlays on top of the target application the currently visible f
 ### Usage
 1. Import the dependency:
 
-    build.gradle (app):
+    `build.gradle` (app):
 
     ``` gradle
     dependencies {
@@ -14,7 +15,7 @@ Screen tracker overlays on top of the target application the currently visible f
     }
     ```
 
-    build.gradle (project):
+    `build.gradle` (project):
 
     ``` gradle
     repositories {
