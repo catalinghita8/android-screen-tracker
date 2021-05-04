@@ -24,6 +24,29 @@ object ScreenTracker {
 
     fun initialize(application: Application) {
         val overlayService = Intent(application, TextOverlayService::class.java)
+        bindOverlayOnAppEvents(application, overlayService)
+        ScreenTracker.application = application
+        launchService(application, overlayService)
+        bindScreenActivity(application)
+    }
+
+    private fun launchService(
+        application: Application,
+        overlayService: Intent
+    ) {
+        val permissionIsRequired = requiresPermissions(application)
+        if (!permissionIsRequired) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                startForegroundService(application, overlayService)
+            else
+                application.startService(overlayService)
+        }
+    }
+
+    private fun bindOverlayOnAppEvents(
+        application: Application,
+        overlayService: Intent
+    ) {
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : LifecycleObserver {
             @OnLifecycleEvent(Lifecycle.Event.ON_START)
             fun onAppToForeground() {
@@ -35,26 +58,10 @@ object ScreenTracker {
                 application.stopService(overlayService)
             }
         })
-
-        ScreenTracker.application = application
-        val requirePermission = launchService(application, overlayService)
-        bindScreenActivity(application, requirePermission)
     }
 
-    private fun launchService(
-        application: Application,
-        overlayService: Intent
-    ): Boolean {
-        val requirePermission =
-            Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(application)
-        if (!requirePermission) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                startForegroundService(application, overlayService)
-            else
-                application.startService(overlayService)
-        }
-        return requirePermission
-    }
+    private fun requiresPermissions(application: Application) =
+        Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(application)
 
     private fun printFragments(activity: Activity, supportFragmentManager: FragmentManager?) {
         if (supportFragmentManager != null) {
@@ -67,16 +74,20 @@ object ScreenTracker {
 
     private fun printFragmentDetails(activity: Activity, supportFragmentManager: FragmentManager) {
         for (fragment in supportFragmentManager.fragments) {
-            TextOverlayService.setText(application, activity.javaClass.simpleName, fragment?.javaClass?.simpleName)
+            TextOverlayService.setText(
+                application,
+                activity.javaClass.simpleName,
+                fragment?.javaClass?.simpleName
+            )
             printFragments(activity, fragment?.childFragmentManager)
         }
     }
 
-    private fun bindScreenActivity(application: Application, requirePermission: Boolean) {
+    private fun bindScreenActivity(application: Application) {
         application.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                if (requirePermission) {
+                if (requiresPermissions(application)) {
                     val intent = Intent(
                         Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                         Uri.parse("package:" + application.packageName)
@@ -93,7 +104,6 @@ object ScreenTracker {
             }
 
             override fun onActivityResumed(activity: Activity) {
-
                 with(activity as AppCompatActivity?) {
                     if (this != null) {
                         printFragments(activity, this.supportFragmentManager)
