@@ -56,19 +56,19 @@ object ScreenTracker {
         return requirePermission
     }
 
-    private fun printFragments(supportFragmentManager: FragmentManager?) {
+    private fun printFragments(activity: Activity, supportFragmentManager: FragmentManager?) {
         if (supportFragmentManager != null) {
-            printFragmentDetails(supportFragmentManager)
+            printFragmentDetails(activity, supportFragmentManager)
             supportFragmentManager.addOnBackStackChangedListener {
-                printFragmentDetails(supportFragmentManager)
+                printFragmentDetails(activity, supportFragmentManager)
             }
         }
     }
 
-    private fun printFragmentDetails(supportFragmentManager: FragmentManager) {
+    private fun printFragmentDetails(activity: Activity, supportFragmentManager: FragmentManager) {
         for (fragment in supportFragmentManager.fragments) {
-            TextOverlayService.setText(application, fragment?.javaClass?.simpleName)
-            printFragments(fragment?.childFragmentManager)
+            TextOverlayService.setText(application, activity.javaClass.simpleName, fragment?.javaClass?.simpleName)
+            printFragments(activity, fragment?.childFragmentManager)
         }
     }
 
@@ -96,10 +96,10 @@ object ScreenTracker {
 
                 with(activity as AppCompatActivity?) {
                     if (this != null) {
-                        printFragments(this.supportFragmentManager)
+                        printFragments(activity, this.supportFragmentManager)
                         val childManager =
                             this.supportFragmentManager.primaryNavigationFragment?.childFragmentManager
-                        printFragments(childManager)
+                        printFragments(activity, childManager)
                     }
                 }
             }

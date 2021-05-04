@@ -109,10 +109,10 @@ class TextOverlayService : Service() {
 
     private fun getTextFromIntent(intent: Intent) {
         // Get extra data included in the Intent
-        val message = intent.getStringExtra(EXTRA_TEXT)
-        if (message != null) {
-            textView!!.text = message
-        }
+        val activityClassName = intent.getStringExtra(EXTRA_ACTIVITY_TEXT)
+        val fragmentClassName = intent.getStringExtra(EXTRA_FRAGMENT_TEXT)
+        if (activityClassName != null || fragmentClassName != null)
+            textView?.text = "$activityClassName > $fragmentClassName"
     }
 
     private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -129,15 +129,18 @@ class TextOverlayService : Service() {
      */
     companion object {
         private val ACTION_SET_TEXT = "com.codingtroops.screentracker.SET_TEXT"
-        private val EXTRA_TEXT = "com.codingtroops.screentracker.text"
+        private val EXTRA_ACTIVITY_TEXT = "com.codingtroops.screentracker.activity_text"
+        private val EXTRA_FRAGMENT_TEXT = "com.codingtroops.screentracker.fragment_text"
+
         private val TAG: String = TextOverlayService::javaClass.name
         private var lastUsedOverlayText: String? = null
 
-        fun setText(context: Context, text: String?) {
+        fun setText(context: Context, activityClassName: String?, fragmentClassName: String?) {
             val intent = Intent(ACTION_SET_TEXT)
-            intent.putExtra(EXTRA_TEXT, text)
+            intent.putExtra(EXTRA_ACTIVITY_TEXT, activityClassName)
+            intent.putExtra(EXTRA_FRAGMENT_TEXT, fragmentClassName)
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
-            lastUsedOverlayText = text
+            lastUsedOverlayText = "$activityClassName > $fragmentClassName"
         }
 
     }
