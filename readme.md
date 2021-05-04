@@ -1,7 +1,7 @@
 # Screen tracker [![](https://jitpack.io/v/catalinghita8/android-screen-tracker.svg)](https://jitpack.io/#catalinghita8/android-screen-tracker)
 
 
-### Description
+### Overview
 Screen tracker overlays on top of the target application the currently visible fragment and its activity host. The library provides insight on what UI components are currently on top of the stacks.
 
 ### Usage
