@@ -11,7 +11,6 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
-import android.os.IBinder
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.TextView
@@ -25,38 +24,12 @@ class TextOverlayService : Service() {
 
     private var textView: TextView? = null
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?) = null
 
     override fun onCreate() {
         super.onCreate()
-        textView = TextView(this)
-        val backgroundColor = Color.parseColor("#A1FFFFFF")
-        val textColor = Color.parseColor("#000000")
-        textView!!.setTextColor(textColor)
-        textView!!.setBackgroundColor(backgroundColor)
-        textView!!.gravity = Gravity.CENTER_HORIZONTAL
-        textView!!.text = lastUsedOverlayText
-
-        val layoutFlag: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        else
-            WindowManager.LayoutParams.TYPE_PHONE
-
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            layoutFlag,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                    or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                    or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        )
-        params.gravity = Gravity.CENTER or Gravity.BOTTOM
-        params.title = "Text Overlay"
-        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        windowManager.addView(textView, params)
+        setupTextView()
+        addTextView()
         LocalBroadcastManager.getInstance(this)
             .registerReceiver(messageReceiver, IntentFilter(ACTION_SET_TEXT))
     }
@@ -95,24 +68,54 @@ class TextOverlayService : Service() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel(channelId: String, channelName: String): String {
-        val chan = NotificationChannel(
+        val channel = NotificationChannel(
             channelId,
             channelName, NotificationManager.IMPORTANCE_NONE
         )
-        chan.lightColor = Color.BLUE
-        chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        channel.lightColor = Color.BLUE
+        channel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        service.createNotificationChannel(chan)
+        service.createNotificationChannel(channel)
         return channelId
     }
-
 
     private fun getTextFromIntent(intent: Intent) {
         // Get extra data included in the Intent
         val activityClassName = intent.getStringExtra(EXTRA_ACTIVITY_TEXT)
         val fragmentClassName = intent.getStringExtra(EXTRA_FRAGMENT_TEXT)
         if (activityClassName != null || fragmentClassName != null)
-            textView?.text = "$activityClassName > $fragmentClassName"
+            textView?.text = getDisplayText(activityClassName, fragmentClassName)
+    }
+
+    private fun setupTextView() {
+        textView = TextView(this)
+        val backgroundColor = Color.parseColor("#A1FFFFFF")
+        val textColor = Color.parseColor("#000000")
+        textView!!.setTextColor(textColor)
+        textView!!.setBackgroundColor(backgroundColor)
+        textView!!.gravity = Gravity.CENTER_HORIZONTAL
+        textView!!.text = lastUsedOverlayText
+    }
+
+    private fun addTextView() {
+        val layoutFlag: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        else
+            WindowManager.LayoutParams.TYPE_PHONE
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            layoutFlag,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        )
+        params.gravity = Gravity.CENTER or Gravity.BOTTOM
+        params.title = "Text Overlay"
+        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        windowManager.addView(textView, params)
     }
 
     private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -140,9 +143,14 @@ class TextOverlayService : Service() {
             intent.putExtra(EXTRA_ACTIVITY_TEXT, activityClassName)
             intent.putExtra(EXTRA_FRAGMENT_TEXT, fragmentClassName)
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
-            lastUsedOverlayText = "$activityClassName > $fragmentClassName"
+            lastUsedOverlayText = getDisplayText(activityClassName, fragmentClassName)
         }
 
+        fun getDisplayText(activityClassName: String?, fragmentClassName: String?) =
+            "$activityClassName > $fragmentClassName"
+
     }
+
+
 
 }

@@ -27,7 +27,7 @@ object ScreenTracker {
         bindOverlayOnAppEvents(application, overlayService)
         ScreenTracker.application = application
         launchService(application, overlayService)
-        bindScreenActivity(application)
+        bindComponentsListeners(application)
     }
 
     private fun launchService(
@@ -63,27 +63,27 @@ object ScreenTracker {
     private fun requiresPermissions(application: Application) =
         Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(application)
 
-    private fun printFragments(activity: Activity, supportFragmentManager: FragmentManager?) {
+    private fun sendComponentsDetails(activity: Activity, supportFragmentManager: FragmentManager?) {
         if (supportFragmentManager != null) {
-            printFragmentDetails(activity, supportFragmentManager)
+            sendDetails(activity, supportFragmentManager)
             supportFragmentManager.addOnBackStackChangedListener {
-                printFragmentDetails(activity, supportFragmentManager)
+                sendDetails(activity, supportFragmentManager)
             }
         }
     }
 
-    private fun printFragmentDetails(activity: Activity, supportFragmentManager: FragmentManager) {
+    private fun sendDetails(activity: Activity, supportFragmentManager: FragmentManager) {
         for (fragment in supportFragmentManager.fragments) {
             TextOverlayService.setText(
                 application,
                 activity.javaClass.simpleName,
                 fragment?.javaClass?.simpleName
             )
-            printFragments(activity, fragment?.childFragmentManager)
+            sendComponentsDetails(activity, fragment?.childFragmentManager)
         }
     }
 
-    private fun bindScreenActivity(application: Application) {
+    private fun bindComponentsListeners(application: Application) {
         application.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -106,10 +106,10 @@ object ScreenTracker {
             override fun onActivityResumed(activity: Activity) {
                 with(activity as AppCompatActivity?) {
                     if (this != null) {
-                        printFragments(activity, this.supportFragmentManager)
+                        sendComponentsDetails(activity, this.supportFragmentManager)
                         val childManager =
                             this.supportFragmentManager.primaryNavigationFragment?.childFragmentManager
-                        printFragments(activity, childManager)
+                        sendComponentsDetails(activity, childManager)
                     }
                 }
             }
