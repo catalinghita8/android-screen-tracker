@@ -22,24 +22,27 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class TextOverlayService : Service() {
 
-    private var textView: TextView? = null
+    private var overlayTextView: TextView? = null
 
-    override fun onBind(intent: Intent?) = null
+    override fun onBind(intent: Intent?): Nothing? = null
 
     override fun onCreate() {
         super.onCreate()
         setupTextView()
         addTextView()
-        LocalBroadcastManager.getInstance(this)
+        LocalBroadcastManager
+            .getInstance(this)
             .registerReceiver(messageReceiver, IntentFilter(ACTION_SET_TEXT))
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
+        LocalBroadcastManager
+            .getInstance(this)
+            .unregisterReceiver(messageReceiver)
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        windowManager.removeView(textView)
-        textView = null
+        windowManager.removeView(overlayTextView)
+        overlayTextView = null
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -59,7 +62,8 @@ class TextOverlayService : Service() {
             }
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-        val notification = notificationBuilder.setOngoing(true)
+        val notification = notificationBuilder
+            .setOngoing(true)
             .setPriority(PRIORITY_MIN)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
@@ -70,7 +74,8 @@ class TextOverlayService : Service() {
     private fun createNotificationChannel(channelId: String, channelName: String): String {
         val channel = NotificationChannel(
             channelId,
-            channelName, NotificationManager.IMPORTANCE_NONE
+            channelName,
+            NotificationManager.IMPORTANCE_NONE
         )
         channel.lightColor = Color.BLUE
         channel.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
@@ -84,17 +89,17 @@ class TextOverlayService : Service() {
         val activityClassName = intent.getStringExtra(EXTRA_ACTIVITY_TEXT)
         val fragmentClassName = intent.getStringExtra(EXTRA_FRAGMENT_TEXT)
         if (activityClassName != null || fragmentClassName != null)
-            textView?.text = getDisplayText(activityClassName, fragmentClassName)
+            overlayTextView?.text = getDisplayText(activityClassName, fragmentClassName)
     }
 
     private fun setupTextView() {
-        textView = TextView(this)
+        overlayTextView = TextView(this)
         val backgroundColor = Color.parseColor("#A1FFFFFF")
         val textColor = Color.parseColor("#000000")
-        textView!!.setTextColor(textColor)
-        textView!!.setBackgroundColor(backgroundColor)
-        textView!!.gravity = Gravity.CENTER_HORIZONTAL
-        textView!!.text = lastUsedOverlayText
+        overlayTextView!!.setTextColor(textColor)
+        overlayTextView!!.setBackgroundColor(backgroundColor)
+        overlayTextView!!.gravity = Gravity.CENTER_HORIZONTAL
+        overlayTextView!!.text = lastUsedOverlayText
     }
 
     private fun addTextView() {
@@ -115,7 +120,7 @@ class TextOverlayService : Service() {
         params.gravity = Gravity.CENTER or Gravity.BOTTOM
         params.title = "Text Overlay"
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        windowManager.addView(textView, params)
+        windowManager.addView(overlayTextView, params)
     }
 
     private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -150,7 +155,5 @@ class TextOverlayService : Service() {
             "$activityClassName > $fragmentClassName"
 
     }
-
-
 
 }

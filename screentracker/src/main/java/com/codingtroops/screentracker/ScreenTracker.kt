@@ -63,7 +63,10 @@ object ScreenTracker {
     private fun requiresPermissions(application: Application) =
         Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(application)
 
-    private fun sendComponentsDetails(activity: Activity, supportFragmentManager: FragmentManager?) {
+    private fun sendComponentsDetails(
+        activity: Activity,
+        supportFragmentManager: FragmentManager?
+    ) {
         if (supportFragmentManager != null) {
             sendDetails(activity, supportFragmentManager)
             supportFragmentManager.addOnBackStackChangedListener {
