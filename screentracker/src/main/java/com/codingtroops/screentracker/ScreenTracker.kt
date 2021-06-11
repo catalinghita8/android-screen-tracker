@@ -87,26 +87,12 @@ object ScreenTracker {
     }
 
     private fun bindComponentsListeners(application: Application) {
-        application.registerActivityLifecycleCallbacks(object :
-            Application.ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                if (requiresPermissions(application)) {
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + application.packageName)
-                    )
-                    activity.startActivityForResult(
-                        intent,
-                        ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE
-                    )
-                }
-            }
-
-            override fun onActivityStarted(activity: Activity) {
-
-            }
-
-            override fun onActivityResumed(activity: Activity) {
+        application.registerPartialActivityLifecycleCallbacks(
+            onActivityCreated = { activity ->
+                if (requiresPermissions(application))
+                    requestPermissions(application, activity)
+            },
+            onActivityResumed = { activity ->
                 with(activity as AppCompatActivity?) {
                     if (this != null) {
                         sendComponentsDetails(activity, this.supportFragmentManager)
@@ -115,24 +101,21 @@ object ScreenTracker {
                         sendComponentsDetails(activity, childManager)
                     }
                 }
-            }
+            })
+    }
 
-            override fun onActivityPaused(activity: Activity) {
-
-            }
-
-            override fun onActivityStopped(activity: Activity) {
-
-            }
-
-            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-
-            }
-
-            override fun onActivityDestroyed(activity: Activity) {
-
-            }
-        })
+    private fun requestPermissions(
+        application: Application,
+        activity: Activity
+    ) {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:" + application.packageName)
+        )
+        activity.startActivityForResult(
+            intent,
+            ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE
+        )
     }
 
 }
