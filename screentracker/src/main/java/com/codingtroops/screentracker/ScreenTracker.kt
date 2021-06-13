@@ -75,27 +75,26 @@ object ScreenTracker {
     }
 
     private fun listenForResumedActivities(activity: Activity) {
-        with(activity as AppCompatActivity?) {
-            if (this != null)
-                sendComponentsDetails(activity, this.supportFragmentManager)
-        }
-    }
+        (activity as AppCompatActivity?)?.let {
+            val pInfo = application.packageManager.getPackageInfo(application.packageName, 0)
+            val appClassName = pInfo.applicationInfo.className
+            val firstIndex = appClassName.indexOf(".")
+            val secondIndex = appClassName.indexOf(".", firstIndex + 1)
+            val basePackage = appClassName.subSequence(0, secondIndex)
 
-    private fun sendComponentsDetails(
-        activity: Activity,
-        supportFragmentManager: FragmentManager?
-    ) {
-        supportFragmentManager?.registerFragmentLifecycleCallbacks(object :
-            FragmentManager.FragmentLifecycleCallbacks() {
-            override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
-                super.onFragmentResumed(fm, f)
-                TextOverlayService.setText(
-                    application,
-                    activity.javaClass.getClassNameWithExtension(),
-                    f.javaClass.getClassNameWithExtension()
-                )
-            }
-        }, true)
+            it.supportFragmentManager.registerFragmentLifecycleCallbacks(object :
+                FragmentManager.FragmentLifecycleCallbacks() {
+                override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+                    super.onFragmentResumed(fm, f)
+                    if (f.javaClass.`package`?.name?.startsWith(basePackage) == true)
+                        TextOverlayService.setText(
+                            application,
+                            activity.javaClass.getClassNameWithExtension(),
+                            f.javaClass.getClassNameWithExtension()
+                        )
+                }
+            }, true)
+        }
     }
 
     fun Class<out Any>.getClassNameWithExtension(): String {
