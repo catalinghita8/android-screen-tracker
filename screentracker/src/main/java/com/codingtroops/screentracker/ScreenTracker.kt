@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.fragment.app.FragmentManager
@@ -60,8 +61,27 @@ object ScreenTracker {
         })
     }
 
-    private fun requiresPermissions(application: Application) =
-        Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(application)
+    private fun bindComponentsListeners(application: Application) {
+        application.registerPartialActivityLifecycleCallbacks(
+            onActivityCreated = { activity ->
+                if (requiresPermissions(application))
+                    requestPermissions(application, activity)
+            },
+            onActivityResumed = { activity ->
+                listenForResumedActivities(activity)
+            })
+    }
+
+    private fun listenForResumedActivities(activity: Activity) {
+        with(activity as AppCompatActivity?) {
+            if (this != null) {
+                sendComponentsDetails(activity, this.supportFragmentManager)
+                val childManager =
+                    this.supportFragmentManager.primaryNavigationFragment?.childFragmentManager
+                sendComponentsDetails(activity, childManager)
+            }
+        }
+    }
 
     private fun sendComponentsDetails(
         activity: Activity,
@@ -86,24 +106,10 @@ object ScreenTracker {
         }
     }
 
-    private fun bindComponentsListeners(application: Application) {
-        application.registerPartialActivityLifecycleCallbacks(
-            onActivityCreated = { activity ->
-                if (requiresPermissions(application))
-                    requestPermissions(application, activity)
-            },
-            onActivityResumed = { activity ->
-                with(activity as AppCompatActivity?) {
-                    if (this != null) {
-                        sendComponentsDetails(activity, this.supportFragmentManager)
-                        val childManager =
-                            this.supportFragmentManager.primaryNavigationFragment?.childFragmentManager
-                        sendComponentsDetails(activity, childManager)
-                    }
-                }
-            })
-    }
+    private fun requiresPermissions(application: Application) =
+        Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(application)
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun requestPermissions(
         application: Application,
         activity: Activity
