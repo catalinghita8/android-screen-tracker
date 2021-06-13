@@ -7,9 +7,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.startForegroundService
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
@@ -74,12 +76,8 @@ object ScreenTracker {
 
     private fun listenForResumedActivities(activity: Activity) {
         with(activity as AppCompatActivity?) {
-            if (this != null) {
+            if (this != null)
                 sendComponentsDetails(activity, this.supportFragmentManager)
-                val childManager =
-                    this.supportFragmentManager.primaryNavigationFragment?.childFragmentManager
-                sendComponentsDetails(activity, childManager)
-            }
         }
     }
 
@@ -87,24 +85,27 @@ object ScreenTracker {
         activity: Activity,
         supportFragmentManager: FragmentManager?
     ) {
-        if (supportFragmentManager != null) {
-            sendDetails(activity, supportFragmentManager)
-            supportFragmentManager.addOnBackStackChangedListener {
-                sendDetails(activity, supportFragmentManager)
+        supportFragmentManager?.registerFragmentLifecycleCallbacks(object :
+            FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+                super.onFragmentResumed(fm, f)
+                TextOverlayService.setText(
+                    application,
+                    activity.javaClass.getClassNameWithExtension(),
+                    f.javaClass.getClassNameWithExtension()
+                )
             }
-        }
+        }, true)
     }
 
-    private fun sendDetails(activity: Activity, supportFragmentManager: FragmentManager) {
-        for (fragment in supportFragmentManager.fragments) {
-            TextOverlayService.setText(
-                application,
-                activity.javaClass.simpleName,
-                fragment?.javaClass?.simpleName
-            )
-            sendComponentsDetails(activity, fragment?.childFragmentManager)
-        }
+    fun Class<out Any>.getClassNameWithExtension(): String {
+        return if (this.isKotlin())
+            this.simpleName + ".kt"
+        else this.simpleName + ".java"
     }
+
+    private fun Class<out Any>.isKotlin() =
+        this.declaredAnnotations.any { it.annotationClass == Metadata::class }
 
     private fun requiresPermissions(application: Application) =
         Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(application)
