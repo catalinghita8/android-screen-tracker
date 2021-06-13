@@ -75,29 +75,26 @@ object ScreenTracker {
     }
 
     private fun listenForResumedActivities(activity: Activity) {
-        (activity as AppCompatActivity?)?.let {
-            val pInfo = application.packageManager.getPackageInfo(application.packageName, 0)
-            val appClassName = pInfo.applicationInfo.className
-            val firstIndex = appClassName.indexOf(".")
-            val secondIndex = appClassName.indexOf(".", firstIndex + 1)
-            val basePackage = appClassName.subSequence(0, secondIndex)
-
-            it.supportFragmentManager.registerFragmentLifecycleCallbacks(object :
-                FragmentManager.FragmentLifecycleCallbacks() {
+        (activity as AppCompatActivity?)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
+            object : FragmentManager.FragmentLifecycleCallbacks() {
                 override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
                     super.onFragmentResumed(fm, f)
-                    if (f.javaClass.`package`?.name?.startsWith(basePackage) == true)
+                    if (!isClassExcluded(f.javaClass))
                         TextOverlayService.setText(
                             application,
                             activity.javaClass.getClassNameWithExtension(),
                             f.javaClass.getClassNameWithExtension()
                         )
                 }
-            }, true)
-        }
+            },
+            true
+        )
     }
 
-    fun Class<out Any>.getClassNameWithExtension(): String {
+    private fun isClassExcluded(clazz: Class<out Any>) =
+        excludedClasses.containsKey(clazz.simpleName)
+
+    private fun Class<out Any>.getClassNameWithExtension(): String {
         return if (this.isKotlin())
             this.simpleName + ".kt"
         else this.simpleName + ".java"
@@ -123,5 +120,11 @@ object ScreenTracker {
             ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE
         )
     }
+
+    private val excludedClasses = arrayListOf<String>(
+        "zzd", // Google
+        "NavHostFragment", // Nav Component
+        "SupportRequestManagerFragment", // Glide
+    ).associateBy { it }
 
 }
