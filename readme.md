@@ -2,7 +2,12 @@
 
 
 ### Overview
-Screen tracker overlays on top of the target application the currently visible fragment and its activity host. The library provides insight on what UI components are currently on top of the stacks.
+Screen Tracker provides insight on what UI components are currently on top of the stacks for the target app. More precisely, it detects the currently visible fragment and its activity host. The components are displayed as an overlay on the screen.
+
+![](https://i.imgur.com/L5rbCzb.png)
+![](https://i.imgur.com/7wz66Tn.png)
+![](https://i.imgur.com/52KWyYV.png)
+
 
 ### Usage
 1. Import the dependency:
@@ -11,7 +16,7 @@ Screen tracker overlays on top of the target application the currently visible f
 
     ``` gradle
     dependencies {
-        implementation 'com.github.catalinghita8:android-screen-tracker:0.1.1'
+        implementation 'com.github.catalinghita8:android-screen-tracker:0.2.3-beta'
     }
     ```
 
@@ -26,7 +31,7 @@ Screen tracker overlays on top of the target application the currently visible f
 2. Initialize the library in your application class:
 
     ``` kotlin
-    class YourApplication: Application() {
+    class MyApplication: Application() {
         override fun onCreate() {
             ...
             ScreenTracker.initialize(this)
