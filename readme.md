@@ -15,7 +15,7 @@ Screen Tracker provides insight on what UI components are currently on top of th
 
     ``` gradle
     dependencies {
-        implementation 'com.github.catalinghita8:android-screen-tracker:0.2.3-beta'
+        implementation 'com.github.catalinghita8:android-screen-tracker:0.2.4-alpha'
     }
     ```
 
