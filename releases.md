@@ -1,6 +1,12 @@
 # Release notes:
 
 
+### Version 0.2.4-alpha - 14.06.2021
+
+**Features:**
+
+-   Listen for Activity only components as well
+
 ### Version 0.2.3-beta - 13.06.2021
 
 **Bugfixing:**
