@@ -4,8 +4,8 @@
 ### Overview
 Screen Tracker provides insight on what UI components are currently on top of the stacks for the target app. More precisely, it detects the currently visible fragment and its activity host. The components are displayed as an overlay on the screen.
 
-![](https://i.imgur.com/4TGL3xu.png)
-![](https://i.imgur.com/H3OwTQC.png)
+![](https://i.imgur.com/bUJ0Ulp.png)
+![](https://i.imgur.com/OZChXcZ.png)
 
 
 ### Usage
