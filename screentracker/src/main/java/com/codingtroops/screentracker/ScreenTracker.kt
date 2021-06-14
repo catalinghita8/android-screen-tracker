@@ -76,6 +76,7 @@ object ScreenTracker {
     }
 
     private fun listenForResumedActivities(activity: Activity) {
+        sendScreenDetails(activity.javaClass, null)
         (activity as AppCompatActivity?)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
             object : FragmentManager.FragmentLifecycleCallbacks() {
                 override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
@@ -99,11 +100,11 @@ object ScreenTracker {
         )
     }
 
-    private fun sendScreenDetails(activityClass: Class<out Any>, fragmentClass: Class<out Any>) {
+    private fun sendScreenDetails(activityClass: Class<out Any>, fragmentClass: Class<out Any>?) {
         TextOverlayService.setText(
             application,
             activityClass.getClassNameWithExtension(),
-            fragmentClass.getClassNameWithExtension()
+            fragmentClass?.getClassNameWithExtension()
         )
     }
 

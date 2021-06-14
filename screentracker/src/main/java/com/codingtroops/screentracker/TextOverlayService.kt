@@ -140,7 +140,6 @@ class TextOverlayService : Service() {
         private val EXTRA_ACTIVITY_TEXT = "com.codingtroops.screentracker.activity_text"
         private val EXTRA_FRAGMENT_TEXT = "com.codingtroops.screentracker.fragment_text"
 
-        private val TAG: String = TextOverlayService::javaClass.name
         private var lastUsedOverlayText: String? = null
 
         fun setText(context: Context, activityClassName: String?, fragmentClassName: String?) {
@@ -151,8 +150,12 @@ class TextOverlayService : Service() {
             lastUsedOverlayText = getDisplayText(activityClassName, fragmentClassName)
         }
 
-        fun getDisplayText(activityClassName: String?, fragmentClassName: String?) =
-            "$activityClassName > $fragmentClassName"
+        fun getDisplayText(activityClassName: String?, fragmentClassName: String?): String {
+            var text = "$activityClassName"
+            if (fragmentClassName != null)
+                text += " > $fragmentClassName"
+            return text
+        }
 
     }
 
