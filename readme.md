@@ -14,7 +14,7 @@ Screen Tracker provides insight on what UI components are currently on top of th
 
     ``` gradle
     dependencies {
-        implementation 'com.github.catalinghita8:android-screen-tracker:0.2.4-alpha'
+        implementation 'com.github.catalinghita8:android-screen-tracker:0.3.0-alpha'
     }
     ```
 
@@ -35,6 +35,22 @@ Screen Tracker provides insight on what UI components are currently on top of th
                 ScreenTracker.initialize(this)
         }
     }
+    ```
+
+3. Optionally, pass a `TrackerConfiguration` instance to the `initialize` call:
+
+    ``` kotlin
+        ScreenTracker.initialize(
+            application = this,
+            configuration = TrackerConfiguration.Builder()
+                .setIsTrackingFragments(true)
+                .setIsFilteringLibFragments(true)
+                .setTextSize(25f)
+                .setTextHexColor("#FFA500")
+                .setTextGravity(TrackerTextGravity.TOP)
+                .setTextBackgroundHexColor("#FFFF00")
+                .build()
+        )
     ```
 
 ### Release notes
