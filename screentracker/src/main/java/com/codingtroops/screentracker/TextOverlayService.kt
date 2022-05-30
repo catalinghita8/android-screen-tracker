@@ -32,7 +32,7 @@ class TextOverlayService : Service() {
         addTextView()
         LocalBroadcastManager
             .getInstance(this)
-            .registerReceiver(messageReceiver, IntentFilter(ACTION_SET_TEXT))
+            .registerReceiver(messageReceiver, IntentFilter(ACTION_LISTEN_TO_TRACKER))
     }
 
     override fun onDestroy() {
@@ -47,7 +47,7 @@ class TextOverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground()
-        intent?.let { getTextFromIntent(it) }
+        intent?.let { parseIntent(it) }
         return START_NOT_STICKY
     }
 
@@ -84,8 +84,17 @@ class TextOverlayService : Service() {
         return channelId
     }
 
-    private fun getTextFromIntent(intent: Intent) {
+    private fun parseIntent(intent: Intent) {
         // Get extra data included in the Intent
+        val config = intent.getParcelableExtra<TrackerConfiguration>(EXTRA_CONFIG)
+        if (config != null && config != configuration) {
+            configuration = config
+            val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            windowManager.removeView(overlayTextView)
+            overlayTextView = null
+            setupTextView()
+            addTextView()
+        }
         val activityClassName = intent.getStringExtra(EXTRA_ACTIVITY_TEXT)
         val fragmentClassName = intent.getStringExtra(EXTRA_FRAGMENT_TEXT)
         if (activityClassName != null || fragmentClassName != null)
@@ -94,12 +103,17 @@ class TextOverlayService : Service() {
 
     private fun setupTextView() {
         overlayTextView = TextView(this)
-        val backgroundColor = Color.parseColor("#A1FFFFFF")
-        val textColor = Color.parseColor("#000000")
-        overlayTextView!!.setTextColor(textColor)
-        overlayTextView!!.setBackgroundColor(backgroundColor)
-        overlayTextView!!.gravity = Gravity.CENTER_HORIZONTAL
-        overlayTextView!!.text = lastUsedOverlayText
+        val backgroundColor = Color.parseColor(configuration.textBackgroundColor)
+        val textColor = Color.parseColor(configuration.textHexColor)
+        val textView = overlayTextView
+        if (textView != null)
+            with(textView) {
+                textSize = configuration.textSize
+                setTextColor(textColor)
+                setBackgroundColor(backgroundColor)
+                gravity = Gravity.CENTER_HORIZONTAL
+                text = lastUsedOverlayText
+            }
     }
 
     private fun addTextView() {
@@ -117,7 +131,7 @@ class TextOverlayService : Service() {
                     or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        params.gravity = Gravity.CENTER or Gravity.BOTTOM
+        params.gravity = Gravity.CENTER or configuration.gravity.value
         params.title = "Text Overlay"
         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         windowManager.addView(overlayTextView, params)
@@ -125,7 +139,7 @@ class TextOverlayService : Service() {
 
     private val messageReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            getTextFromIntent(intent)
+            parseIntent(intent)
         }
     }
 
@@ -136,18 +150,35 @@ class TextOverlayService : Service() {
      * @param text The new overlay text.
      */
     companion object {
-        private val ACTION_SET_TEXT = "com.codingtroops.screentracker.SET_TEXT"
+        private val ACTION_LISTEN_TO_TRACKER =
+            "com.codingtroops.screentracker.ACTION_LISTEN_TO_TRACKER"
         private val EXTRA_ACTIVITY_TEXT = "com.codingtroops.screentracker.activity_text"
         private val EXTRA_FRAGMENT_TEXT = "com.codingtroops.screentracker.fragment_text"
+        private val EXTRA_CONFIG = "com.codingtroops.screentracker.config"
+
 
         private var lastUsedOverlayText: String? = null
+        private var configuration = TrackerConfiguration.DEFAULT
 
-        fun setText(context: Context, activityClassName: String?, fragmentClassName: String?) {
-            val intent = Intent(ACTION_SET_TEXT)
+        fun setConfiguration(context: Context, configuration: TrackerConfiguration) {
+            val intent = Intent(ACTION_LISTEN_TO_TRACKER)
+            intent.putExtra(EXTRA_CONFIG, configuration)
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
+        }
+
+        fun setText(
+            context: Context,
+            activityClassName: String?,
+            fragmentClassName: String?,
+            configuration: TrackerConfiguration
+        ) {
+            val intent = Intent(ACTION_LISTEN_TO_TRACKER)
             intent.putExtra(EXTRA_ACTIVITY_TEXT, activityClassName)
             intent.putExtra(EXTRA_FRAGMENT_TEXT, fragmentClassName)
+            intent.putExtra(EXTRA_CONFIG, configuration)
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
             lastUsedOverlayText = getDisplayText(activityClassName, fragmentClassName)
+            this.configuration = configuration
         }
 
         fun getDisplayText(activityClassName: String?, fragmentClassName: String?): String {

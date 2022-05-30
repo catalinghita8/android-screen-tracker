@@ -23,15 +23,20 @@ object ScreenTracker {
 
     private lateinit var application: Application
     private var lastFragmentClass: Class<out Any>? = null
+    private var configuration = TrackerConfiguration.DEFAULT
 
     private const val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 5469
 
-    fun initialize(application: Application) {
+    fun initialize(
+        application: Application,
+        configuration: TrackerConfiguration = TrackerConfiguration.DEFAULT
+    ) {
         val overlayService = Intent(application, TextOverlayService::class.java)
         bindOverlayOnAppEvents(application, overlayService)
         ScreenTracker.application = application
         launchService(application, overlayService)
         bindComponentsListeners(application)
+        this.configuration = configuration
     }
 
     private fun launchService(
@@ -77,39 +82,42 @@ object ScreenTracker {
 
     private fun listenForResumedActivities(activity: Activity) {
         sendScreenDetails(activity.javaClass, null)
-        (activity as AppCompatActivity?)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
-            object : FragmentManager.FragmentLifecycleCallbacks() {
-                override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
-                    super.onFragmentResumed(fm, f)
-                    if (!isClassExcluded(f.javaClass)) {
-                        sendScreenDetails(activity.javaClass, f.javaClass)
-                        if (!f.isBottomDialog())
-                            lastFragmentClass = f.javaClass
+        if (configuration.trackFragments)
+            (activity as AppCompatActivity?)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
+                object : FragmentManager.FragmentLifecycleCallbacks() {
+                    override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+                        super.onFragmentResumed(fm, f)
+                        if (!isClassExcluded(f.javaClass)) {
+                            sendScreenDetails(activity.javaClass, f.javaClass)
+                            if (!f.isBottomDialog())
+                                lastFragmentClass = f.javaClass
+                        }
                     }
-                }
 
-                override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
-                    super.onFragmentViewDestroyed(fm, f)
-                    val lastFragment = lastFragmentClass
-                    // If a Dialog Fragment is destroyed, we must rollback to the previous fragment
-                    if (f.isBottomDialog() && lastFragment != null)
-                        sendScreenDetails(activity.javaClass, lastFragment)
-                }
-            },
-            true
-        )
+                    override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
+                        super.onFragmentViewDestroyed(fm, f)
+                        val lastFragment = lastFragmentClass
+                        // If a Dialog Fragment is destroyed, we must rollback to the previous fragment
+                        if (f.isBottomDialog() && lastFragment != null)
+                            sendScreenDetails(activity.javaClass, lastFragment)
+                    }
+                },
+                true
+            )
     }
 
     private fun sendScreenDetails(activityClass: Class<out Any>, fragmentClass: Class<out Any>?) {
         TextOverlayService.setText(
             application,
             activityClass.getClassNameWithExtension(),
-            fragmentClass?.getClassNameWithExtension()
+            fragmentClass?.getClassNameWithExtension(),
+            configuration
         )
     }
 
     private fun isClassExcluded(clazz: Class<out Any>) =
-        excludedClasses.containsKey(clazz.simpleName)
+        configuration.filteringLibFragments &&
+                excludedClasses.containsKey(clazz.simpleName)
 
     private fun Class<out Any>.getClassNameWithExtension(): String {
         return if (this.isKotlin())
@@ -117,8 +125,7 @@ object ScreenTracker {
         else this.simpleName + ".java"
     }
 
-    private fun Fragment.isBottomDialog() =
-        (this is BottomSheetDialogFragment || this is BottomSheetDialog)
+    private fun Fragment.isBottomDialog() = this is BottomSheetDialogFragment
 
     private fun Class<out Any>.isKotlin() =
         this.declaredAnnotations.any { it.annotationClass == Metadata::class }
@@ -141,7 +148,7 @@ object ScreenTracker {
         )
     }
 
-    private val excludedClasses = arrayListOf<String>(
+    private val excludedClasses = arrayListOf(
         "zzd", // Google
         "NavHostFragment", // Nav Component
         "SupportRequestManagerFragment", // Glide
