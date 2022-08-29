@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat.startForegroundService
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
@@ -83,7 +84,7 @@ object ScreenTracker {
     private fun listenForResumedActivities(activity: Activity) {
         sendScreenDetails(activity.javaClass, null)
         if (configuration.trackFragments)
-            (activity as AppCompatActivity?)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
+            (activity as? FragmentActivity)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
                 object : FragmentManager.FragmentLifecycleCallbacks() {
                     override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
                         super.onFragmentResumed(fm, f)
