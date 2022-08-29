@@ -84,7 +84,7 @@ object ScreenTracker {
     private fun listenForResumedActivities(activity: Activity) {
         sendScreenDetails(activity.javaClass, null)
         if (configuration.trackFragments)
-            (activity as FragmentActivity?)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
+            (activity as? FragmentActivity)?.supportFragmentManager?.registerFragmentLifecycleCallbacks(
                 object : FragmentManager.FragmentLifecycleCallbacks() {
                     override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
                         super.onFragmentResumed(fm, f)
