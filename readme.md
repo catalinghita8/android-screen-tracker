@@ -31,7 +31,7 @@ Screen Tracker provides insight on what UI components are currently on top of th
     ``` kotlin
     class MyApplication: Application() {
         override fun onCreate() {
-            if(BuildConfig.DEBUG)
+            if (BuildConfig.DEBUG)
                 ScreenTracker.initialize(this)
         }
     }
